@@ -40,4 +40,7 @@ def main():
     client = DatabricksClient(token, instance_id)
     # run terminate cluster
     terminate_cluster(client, cluster_id)
-    
+
+
+if __name__ == "__main__":
+    main()
