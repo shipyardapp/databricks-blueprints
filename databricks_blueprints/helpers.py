@@ -10,7 +10,7 @@ artifact_subfolder_paths = shipyard.logs.determine_artifact_subfolders(
 shipyard.logs.create_artifacts_folders(artifact_subfolder_paths)
 
 
-class DatabricksRequest(object):
+class DatabricksClient(object):
     "Databricks connection object for use in running queries"
     def __init__(self, token, instance_id):
         self.token = token
@@ -34,8 +34,8 @@ class DatabricksRequest(object):
                                 headers=api_headers,
                                 data=data)
         return response
-    
-    
+
+
 def start_cluster(token, instance_id, cluster_id):
     """ 
     Starts a Databricks Cluster and saves the status in the artifacts folder. 
@@ -44,10 +44,10 @@ def start_cluster(token, instance_id, cluster_id):
     
     see: https://docs.databricks.com/dev-tools/api/latest/clusters.html#start
     """
-    db_request = DatabricksRequest(token, instance_id)
+    databricks_client = DatabricksClient(token, instance_id)
     start_cluster_endpoint = "/clusters/start"
     payload = {"cluster_id": cluster_id}
-    start_response = db_request.post(start_cluster_endpoint, data=payload)
+    start_response = databricks_client.post(start_cluster_endpoint, data=payload)
     if start_response.status_code == requests.codes.ok:
         print(f"Cluster: {cluster_id} started successfully")
     elif start_response.status_code == 400: # Cluster in RESTARTING state
