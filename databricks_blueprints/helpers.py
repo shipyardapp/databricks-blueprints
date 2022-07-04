@@ -35,6 +35,15 @@ class DatabricksClient(object):
                                 data=data)
         return response
 
+    def stream(self, endpoint, json={}):
+        api_headers = self.get_headers()
+        endpoint_url = self.base_url + endpoint
+        response = requests.post(endpoint_url, 
+                                headers=api_headers,
+                                json=json,
+                                stream=True)
+        return response
+
 
 def start_cluster(token, instance_id, cluster_id):
     """ 
