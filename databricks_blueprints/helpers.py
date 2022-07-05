@@ -1,6 +1,10 @@
+import sys
 import requests
 import shipyard_utils as shipyard
-
+try:
+    import errors
+except BaseException:
+    from . import errors
 
 # Create Artifacts folders
 base_folder_name = shipyard.logs.determine_base_artifact_folder(
@@ -25,6 +29,10 @@ class DatabricksClient(object):
         response = requests.get(endpoint_url, 
                                 headers=api_headers,
                                 params=params)
+        if response.status_code == 401: # invalid account token
+            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        elif response.status_code == 404: # wrong instance_id
+            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)  
         return response
     
     def post(self, endpoint, data={}):
@@ -33,6 +41,10 @@ class DatabricksClient(object):
         response = requests.post(endpoint_url, 
                                 headers=api_headers,
                                 data=data)
+        if response.status_code == 401: # invalid account token
+            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        elif response.status_code == 404: # wrong instance_id
+            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)  
         return response
 
     def stream(self, endpoint, json={}):
@@ -42,6 +54,10 @@ class DatabricksClient(object):
                                 headers=api_headers,
                                 json=json,
                                 stream=True)
+        if response.status_code == 401: # invalid account token
+            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        elif response.status_code == 404: # wrong instance_id
+            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
         return response
 
 
@@ -61,10 +77,12 @@ def start_cluster(token, instance_id, cluster_id):
         print(f"Cluster: {cluster_id} started successfully")
     elif start_response.status_code == 400: # Cluster in RESTARTING state
         print(f"Cannot start Cluster: {cluster_id}. Cluster is currently RESTARTING")
+        sys.exit(errors.EXIT_CODE_CLUSTER_STATUS_RESTARTING)
     else:
         print(f"Failed to start Cluster: {cluster_id}",
               f"HTTP Status code: {start_response.status_code} ",
               f"and Response: {start_response.text}")
+        sys.exit(errors.EXIT_CODE_CLUSTER_STATUS_ERRORED)
     # save response to shipyard logs
     response_file_name = shipyard.files.combine_folder_and_file_name(
         artifact_subfolder_paths['responses'], 
