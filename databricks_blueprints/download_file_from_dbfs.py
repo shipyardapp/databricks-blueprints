@@ -61,7 +61,7 @@ def main():
     # create file paths
     if not source_folder_name:
         source_folder_name = '/FileStore/'
-    source_file_path = shipyard.combine_folder_and_file_name(
+    source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name,
         source_file_name
     )
@@ -69,7 +69,7 @@ def main():
         dest_file_name = source_file_name
     if not dest_folder_name:
         dest_folder_name = os.getcwd()
-    destination_file_path = shipyard.combine_folder_and_file_name(
+    destination_file_path = shipyard.files.combine_folder_and_file_name(
         dest_folder_name,
         dest_file_name
     )
