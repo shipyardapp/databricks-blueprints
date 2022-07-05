@@ -1,5 +1,6 @@
 import argparse
 import requests
+import sys
 import shipyard_utils as shipyard
 try:
     import helpers
@@ -32,9 +33,11 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
         print(f"File: {source_file_path} moved successfully to {destination_file_path}")
     elif move_response.status_code == 401:
         print("File: {source_file_path} does not exist")
+        sys.exit(errors.EXIT_CODE_DBFS_INVALID_SOURCE)
     else:
         print(f"DBFS {source_file_path} to {destination_file_path} failed.",
               "response: {move_response.text}")
+        sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
 
 def main():
