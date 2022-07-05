@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 import requests
 import shipyard_utils as shipyard
 try:
@@ -42,6 +43,8 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
                     offset += 1024
                 else: # that was the last of the data in the file
                     break
+            else:
+                sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
     print(f"finished downloading file:{source_file_path} as {dest_file_path}")
     
 
