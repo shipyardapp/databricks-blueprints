@@ -2,10 +2,15 @@
 
 """
 import argparse
+import sys
 import requests
 import shipyard_utils as shipyard
-import helpers
-import errors
+try:
+    import helpers
+    import errors
+except BaseException:
+    from . import helpers
+    from . import errors
 
 
 def get_args():
@@ -33,10 +38,13 @@ def delete_file_from_dbfs(client, file_path_and_name):
         error_message = delete_json['message']
         if error_code == 'PARTIAL_DELETE':
             print(error_message)
+            sys.exit(errors.EXIT_CODE_DBFS_FILE_OVERFLOW)
         else: # This is a regular Service unavailable error
             print("File delete error: Service currently unavailable")
+            sys.exit(errors.EXIT_CODE_DBFS_SERVICE_UNAVAILABLE)
     else:
         print(f"File delete failed. Response: {delete_response.text}")
+        sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         
 
 def main():
@@ -48,7 +56,7 @@ def main():
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
     # create delete file path
-    file_path_and_name = shipyard.combine_folder_and_file_name(source_folder_name,
+    file_path_and_name = shipyard.files.combine_folder_and_file_name(source_folder_name,
                                                                source_file_name)
     delete_file_from_dbfs(client, file_path_and_name)
     
