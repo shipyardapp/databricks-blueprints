@@ -9,6 +9,7 @@ Must create the appropriate directory structure in Databricks if it doesn't exis
 Use the method prescribed by Databricks to chunk the upload.
 
 """
+import sys
 import argparse
 import base64
 import os
@@ -42,22 +43,27 @@ def upload_file_to_dbfs(client, local_file_path, dest_file_path):
         "overwrite": "true"
     }
     handle_response = client.post(create_handle_endpoint, data=payload)
-    handle = handle_response.json()['handle']
-    # upload file
-    with open(local_file_path) as file:
-        while True:
-            # A block can be at most 1MB
-            block = file.read(1 << 20)
-            if not block:
-                break
-            if type(block) == 'str':
-                block = bytes(block, 'utf-8')
-            data = base64.standard_b64encode(block)
-            client.stream('/dbfs/add-block', json={"handle": handle, "data": data})
-        print(f"finished uploading file:{local_file_path} to {dest_file_path}")
-    # close the handle to finish uploading
-    client.stream("/dbfs/close", {"handle": handle})
-    print("file stream supposedly closed")
+    if handle_response.status_code == requests.codes.ok:
+        handle = handle_response.json()['handle']
+        # upload file
+        with open(local_file_path) as file:
+            while True:
+                # A block can be at most 1MB
+                block = file.read(1 << 20)
+                if not block:
+                    break
+                data = base64.standard_b64encode(bytes(block, 'utf-8'))
+                data = str(data)
+                client.stream('/dbfs/add-block', json={"handle": handle, "data": data})
+            print(f"finished uploading file:{local_file_path} to {dest_file_path}")
+        # close the handle to finish uploading
+        client.stream("/dbfs/close", {"handle": handle})
+        print("file stream closed")
+    else: # encountered an error
+        error_code = handle_response.json()['error_code']
+        message = handle_response.json()['message']
+        print(f"Error uploading file: {error_code} - {message}")
+        sys.exit(errors.EXIT_CODE_BAD_REQUEST)
 
 
 def main():
