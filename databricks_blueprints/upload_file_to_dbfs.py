@@ -50,6 +50,8 @@ def upload_file_to_dbfs(client, local_file_path, dest_file_path):
             block = file.read(1 << 20)
             if not block:
                 break
+            if type(block) == 'str':
+                block = bytes(block, 'utf-8')
             data = base64.standard_b64encode(block)
             client.stream('/dbfs/add-block', json={"handle": handle, "data": data})
         print(f"finished uploading file:{local_file_path} to {dest_file_path}")
