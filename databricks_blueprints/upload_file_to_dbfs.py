@@ -54,10 +54,11 @@ def upload_file_to_dbfs(client, local_file_path, dest_file_path):
                     break
                 data = base64.standard_b64encode(bytes(block, 'utf-8'))
                 data = str(data)
-                client.stream('/dbfs/add-block', json={"handle": handle, "data": data})
+                block_resp = client.stream('/dbfs/add-block', json={"handle": handle, "data": data})
+                print(f"add block status: {block_resp.status_code}")
             print(f"finished uploading file:{local_file_path} to {dest_file_path}")
         # close the handle to finish uploading
-        client.stream("/dbfs/close", {"handle": handle})
+        client.post("/dbfs/close", data={"handle": handle})
         print("file stream closed")
     else: # encountered an error
         error_code = handle_response.json()['error_code']
