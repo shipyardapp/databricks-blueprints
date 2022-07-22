@@ -15,9 +15,9 @@ def get_args():
     parser.add_argument('--access-token', dest='access_token', required=True)
     parser.add_argument('--instance-id', dest='instance_id', required=True)
     parser.add_argument('--source-file-name', dest='source_file_name', required=True)
-    parser.add_argument('--source-folder-name', dest='source_folder_name', required=True)
+    parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
     parser.add_argument('--dest-file-name', dest='dest_file_name', required=True)
-    parser.add_argument('--dest-folder-name', dest='dest_folder_name', required=True)
+    parser.add_argument('--dest-folder-name', dest='dest_folder_name', required=False)
     args = parser.parse_args()
     return args
 
@@ -32,7 +32,7 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
     if move_response.status_code == requests.codes.ok:
         print(f"File: {source_file_path} moved successfully to {destination_file_path}")
     elif move_response.status_code == 401:
-        print("File: {source_file_path} does not exist")
+        print(f"File: {source_file_path} does not exist")
         sys.exit(errors.EXIT_CODE_DBFS_INVALID_SOURCE)
     else:
         print(f"DBFS {source_file_path} to {destination_file_path} failed.",
@@ -51,11 +51,11 @@ def main():
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
     # create file paths
-    source_file_path = shipyard.combine_folder_and_file_name(
+    source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name,
         source_file_name
     )
-    destination_file_path = shipyard.combine_folder_and_file_name(
+    destination_file_path = shipyard.files.combine_folder_and_file_name(
         dest_folder_name,
         dest_file_name
     )
