@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import base64
 import requests
 import shipyard_utils as shipyard
 try:
@@ -33,11 +34,16 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
                 "offset": offset, 
                 "length": 1024 # 1MB of data 
             }
-            read_response = client.get(read_handle_endpoint, params=payload)
+            try:
+                read_response = client.get(read_handle_endpoint, params=payload)
+            except Exception as e:
+                print(f'Connection Error: Failed to reach server at {read_handle_endpoint}')
+                sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
+
             if read_response.status_codes == requests.codes.ok:
                 response_data = read_response.json()
-                data = response_data['data']
-                file.write(data)
+                data = base64.b64decode(response_data['data'])
+                file.write(data.decode('utf-8'))
                 # check if there is still more data left to read
                 if response_data['bytes_read'] == 1024:
                     offset += 1024
