@@ -31,7 +31,14 @@ def get_args():
 
 def download_file_from_dbfs(client, source_file_path, dest_file_path):
     read_handle_endpoint = "/dbfs/read"
-    with open(dest_file_path, "w+") as file:
+    # check if filetype works with binary or not
+    if ('.csv' in source_file_path) or ('.txt' in source_file_path):
+        is_binary = False
+        write_mode = "w+"
+    else:
+        is_binary = True
+        write_mode = 'wb+'
+    with open(dest_file_path, write_mode) as file:
         offset = 0
         while True:
             payload = {
@@ -49,7 +56,10 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
             if read_response.status_code == requests.codes.ok:
                 response_data = read_response.json()
                 data = base64.b64decode(response_data['data'])
-                file.write(data.decode('utf-8'))
+                if is_binary:
+                    file.write(data)
+                else:
+                    file.write(data.decode('utf-8'))
                 # check if there is still more data left to read
                 if response_data['bytes_read'] == ONE_MB:
                     offset += ONE_MB
@@ -88,7 +98,9 @@ def main():
     if not dest_file_name:
         dest_file_name = source_file_name
 
-    
+    if not dest_folder_name:
+        dest_folder_name = os.getcwd()
+        
     # get list of all potential file matches
     if source_file_name_match_type == 'regex_match':
         files = helpers.list_dbfs_files(client, source_folder_name)
@@ -99,7 +111,7 @@ def main():
 
         for index, file_name in enumerate(matching_file_names):
             source_file_path = shipyard.files.combine_folder_and_file_name(
-                            source_folder_name, file_name)
+                        source_folder_name, file_name)
             destination_file_path = shipyard.files.combine_folder_and_file_name(
                             dest_folder_name, file_name)
             print(f'Downloading file {index+1} of {len(matching_file_names)}')
@@ -110,7 +122,7 @@ def main():
     # otherwise download the file normally
     else:
         source_file_path = shipyard.files.combine_folder_and_file_name(
-                            source_folder_name, source_file_name)
+                        source_folder_name, file_name)
         destination_file_path = shipyard.files.combine_folder_and_file_name(
                             dest_folder_name, dest_file_name)
         download_file_from_dbfs(client, source_file_path, destination_file_path)
