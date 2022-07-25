@@ -40,7 +40,7 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
                 print(f'Connection Error: Failed to reach server at {read_handle_endpoint}')
                 sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
-            if read_response.status_codes == requests.codes.ok:
+            if read_response.status_code == requests.codes.ok:
                 response_data = read_response.json()
                 data = base64.b64decode(response_data['data'])
                 file.write(data.decode('utf-8'))
