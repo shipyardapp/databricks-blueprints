@@ -34,10 +34,9 @@ class DatabricksClient(object):
         response = self.request.get(endpoint_url,
                                 headers=api_headers,
                                 params=params)
-        if response.status_code == 401:  # invalid account token
+        if response.status_code == 403:  # invalid account token
+            print(f"Invalid Access Token: {self.token}")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
         return response
 
     def post(self, endpoint, data={}):
@@ -46,10 +45,9 @@ class DatabricksClient(object):
         response = self.request.post(endpoint_url,
                                  headers=api_headers,
                                  json=data)
-        if response.status_code == 401:  # invalid account token
+        if response.status_code == 403:  # invalid account token
+            print(f"Invalid Access Token: {self.token}")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
         return response
 
     def stream(self, endpoint, json={}):
@@ -59,10 +57,8 @@ class DatabricksClient(object):
                                  headers=api_headers,
                                  json=json,
                                  stream=True)
-        if response.status_code == 401:  # invalid account token
+        if response.status_code == 403:  # invalid account token
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
         return response
 
 

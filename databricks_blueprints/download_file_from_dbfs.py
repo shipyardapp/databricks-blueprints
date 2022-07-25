@@ -22,6 +22,8 @@ def get_args():
     parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
     parser.add_argument('--dest-file-name', dest='dest_file_name', required=False)
     parser.add_argument('--dest-folder-name', dest='dest_folder_name', required=False)
+    parser.add_argument('--source-file-name-match-type', dest='source_file_name_match_type',
+                        choices={'exact_match', 'regex_match'}, required=True)
     args = parser.parse_args()
     return args
 
@@ -52,6 +54,9 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
                     offset += ONE_MB
                 else: # that was the last of the data in the file
                     break
+            elif read_response.status_code == 404:
+                print(f"Error: No file located at {source_file_path}")
+                sys.exit(errors.EXIT_CODE_DBFS_INVALID_FILEPATH)
             else:
                 print(f"Failed to read data: {read_response.status_code} {read_response.text}")
                 sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
@@ -66,13 +71,16 @@ def main():
     source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
     dest_folder_name = args.dest_folder_name
+    match_type = args.source_file_name_match_type
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
-    # create file paths
+    
+    # Handle downloads
     if not source_folder_name:
         source_folder_name = '/FileStore/'
     source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name, source_file_name)
+    source_file_path = source_folder_name + source_file_name
     if not dest_file_name:
         dest_file_name = source_file_name
     if not dest_folder_name:
