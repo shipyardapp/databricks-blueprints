@@ -20,6 +20,7 @@ class DatabricksClient(object):
     def __init__(self, token, instance_url):
         self.token = token
         self.base_url = f"https://{instance_url}/api/2.0"
+        self.request = requests.Session() # add HTTP persistence
 
     def get_headers(self):
         return {
@@ -30,7 +31,7 @@ class DatabricksClient(object):
     def get(self, endpoint, params={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.get(endpoint_url,
+        response = self.request.get(endpoint_url,
                                 headers=api_headers,
                                 params=params)
         if response.status_code == 401:  # invalid account token
@@ -42,7 +43,7 @@ class DatabricksClient(object):
     def post(self, endpoint, data={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.post(endpoint_url,
+        response = self.request.post(endpoint_url,
                                  headers=api_headers,
                                  json=data)
         if response.status_code == 401:  # invalid account token
@@ -54,7 +55,7 @@ class DatabricksClient(object):
     def stream(self, endpoint, json={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.post(endpoint_url,
+        response = self.request.post(endpoint_url,
                                  headers=api_headers,
                                  json=json,
                                  stream=True)

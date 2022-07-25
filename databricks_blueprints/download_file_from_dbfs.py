@@ -11,6 +11,8 @@ except BaseException:
     from . import helpers
     from . import errors
 
+ONE_MB = 1024*1024
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -32,12 +34,13 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
             payload = {
                 "path": source_file_path,
                 "offset": offset, 
-                "length": 1024 # 1MB of data 
+                "length": ONE_MB # 1MB of data 
             }
             try:
                 read_response = client.get(read_handle_endpoint, params=payload)
             except Exception as e:
-                print(f'Connection Error: Failed to reach server at {read_handle_endpoint}')
+                print(f'Connection Error for {read_handle_endpoint}: {e}')
+                print(f"Data downloaded: {offset/1024}MB")
                 sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
             if read_response.status_code == requests.codes.ok:
@@ -45,11 +48,12 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
                 data = base64.b64decode(response_data['data'])
                 file.write(data.decode('utf-8'))
                 # check if there is still more data left to read
-                if response_data['bytes_read'] == 1024:
-                    offset += 1024
+                if response_data['bytes_read'] == ONE_MB:
+                    offset += ONE_MB
                 else: # that was the last of the data in the file
                     break
             else:
+                print(f"Failed to read data: {read_response.status_code} {read_response.text}")
                 sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
     print(f"finished downloading file:{source_file_path} as {dest_file_path}")
     
@@ -68,9 +72,7 @@ def main():
     if not source_folder_name:
         source_folder_name = '/FileStore/'
     source_file_path = shipyard.files.combine_folder_and_file_name(
-        source_folder_name,
-        source_file_name
-    )
+        source_folder_name + source_file_name)
     if not dest_file_name:
         dest_file_name = source_file_name
     if not dest_folder_name:
