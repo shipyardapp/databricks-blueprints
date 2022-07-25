@@ -1,5 +1,6 @@
 import sys
 import requests
+from pathlib import Path
 import shipyard_utils as shipyard
 try:
     import errors
@@ -58,6 +59,7 @@ class DatabricksClient(object):
                                  json=json,
                                  stream=True)
         if response.status_code == 403:  # invalid account token
+            print(f"Invalid Access Token: {self.token}")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
         return response
 
@@ -107,3 +109,15 @@ def start_cluster(token, instance_id, cluster_id):
               f"HTTP Status code: {start_response.status_code} ",
               f"and Response: {start_response.text}")
         sys.exit(errors.EXIT_CODE_CLUSTER_STATUS_ERRORED)
+
+
+def list_DBFS_files(client, folder_path):
+    """ retrieves a list of all the DBFS files with the names intact"""
+    params = {"path": folder_path}
+    response = client.get('/dbfs/list', params=params)
+    files_data = response.json()['files']
+    files_list = [
+        Path(file['path']).name for file in files_data
+        if file['is_dir'] == False
+    ]
+    return files_list
