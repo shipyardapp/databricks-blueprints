@@ -111,7 +111,7 @@ def start_cluster(token, instance_id, cluster_id):
         sys.exit(errors.EXIT_CODE_CLUSTER_STATUS_ERRORED)
 
 
-def list_DBFS_files(client, folder_path):
+def list_dbfs_files(client, folder_path):
     """ retrieves a list of all the DBFS files with the names intact"""
     params = {"path": folder_path}
     response = client.get('/dbfs/list', params=params)
