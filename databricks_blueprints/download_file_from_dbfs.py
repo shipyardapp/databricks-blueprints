@@ -72,7 +72,7 @@ def main():
     if not source_folder_name:
         source_folder_name = '/FileStore/'
     source_file_path = shipyard.files.combine_folder_and_file_name(
-        source_folder_name + source_file_name)
+        source_folder_name, source_file_name)
     if not dest_file_name:
         dest_file_name = source_file_name
     if not dest_folder_name:
