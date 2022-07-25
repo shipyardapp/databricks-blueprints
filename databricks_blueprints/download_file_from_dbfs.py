@@ -3,6 +3,7 @@ import os
 import sys
 import base64
 import requests
+import re
 import shipyard_utils as shipyard
 try:
     import helpers
@@ -40,8 +41,8 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
             }
             try:
                 read_response = client.get(read_handle_endpoint, params=payload)
-            except Exception as e:
-                print(f'Connection Error for {read_handle_endpoint}: {e}')
+            except Exception:
+                print(f'Connection Error for {read_handle_endpoint}')
                 print(f"Data downloaded: {offset/1024}MB")
                 sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
@@ -57,6 +58,12 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
             elif read_response.status_code == 404:
                 print(f"Error: No file located at {source_file_path}")
                 sys.exit(errors.EXIT_CODE_DBFS_INVALID_FILEPATH)
+            elif read_response.status_code == 400: # Bad Request
+                error = read_response.json()
+                code = error['error_code']
+                message = error['message']
+                print(f"Error: {code} {message}")
+                sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
             else:
                 print(f"Failed to read data: {read_response.status_code} {read_response.text}")
                 sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
@@ -71,25 +78,42 @@ def main():
     source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
     dest_folder_name = args.dest_folder_name
-    match_type = args.source_file_name_match_type
+    source_file_name_match_type = args.source_file_name_match_type
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
     
-    # Handle downloads
     if not source_folder_name:
         source_folder_name = '/FileStore/'
-    source_file_path = shipyard.files.combine_folder_and_file_name(
-        source_folder_name, source_file_name)
-    source_file_path = source_folder_name + source_file_name
+
     if not dest_file_name:
         dest_file_name = source_file_name
-    if not dest_folder_name:
-        dest_folder_name = os.getcwd()
-    destination_file_path = shipyard.files.combine_folder_and_file_name(
-        dest_folder_name,
-        dest_file_name
-    )
-    download_file_from_dbfs(client, source_file_path, destination_file_path)
+
+    
+    # get list of all potential file matches
+    if source_file_name_match_type == 'regex_match':
+        files = helpers.list_dbfs_files(client, source_folder_name)
+        matching_file_names = shipyard.files.find_all_file_matches(files,
+                                            re.compile(source_file_name))
+        print(matching_file_names)
+        print(f'{len(matching_file_names)} files found. Preparing to download...')
+
+        for index, file_name in enumerate(matching_file_names):
+            source_file_path = shipyard.files.combine_folder_and_file_name(
+                            source_folder_name, file_name)
+            destination_file_path = shipyard.files.combine_folder_and_file_name(
+                            dest_folder_name, file_name)
+            print(f'Downloading file {index+1} of {len(matching_file_names)}')
+            try:
+                download_file_from_dbfs(client, source_file_path, destination_file_path)
+            except Exception:
+                print(f'Failed to download {file_name}... Skipping')
+    # otherwise download the file normally
+    else:
+        source_file_path = shipyard.files.combine_folder_and_file_name(
+                            source_folder_name, source_file_name)
+        destination_file_path = shipyard.files.combine_folder_and_file_name(
+                            dest_folder_name, dest_file_name)
+        download_file_from_dbfs(client, source_file_path, destination_file_path)
 
 
 if __name__ == "__main__":
