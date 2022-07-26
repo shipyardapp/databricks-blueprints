@@ -32,32 +32,44 @@ class DatabricksClient(object):
     def get(self, endpoint, params={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = self.request.get(endpoint_url,
-                                headers=api_headers,
-                                params=params)
-        if response.status_code == 403:  # invalid account token
-            print(f"Invalid Access Token: {self.token}")
-            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        try:
+            response = self.request.get(endpoint_url,
+                                    headers=api_headers,
+                                    params=params)
+            if response.status_code == 403:  # invalid account token
+                print(f"Invalid Access Token: {self.token}")
+                sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         return response
 
     def post(self, endpoint, data={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = self.request.post(endpoint_url,
-                                 headers=api_headers,
-                                 json=data)
-        if response.status_code == 403:  # invalid account token
-            print(f"Invalid Access Token: {self.token}")
-            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        try:
+            response = self.request.post(endpoint_url,
+                                     headers=api_headers,
+                                     json=data)
+            if response.status_code == 403:  # invalid account token
+                print(f"Invalid Access Token: {self.token}")
+                sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         return response
 
     def stream(self, endpoint, json={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = self.request.post(endpoint_url,
-                                 headers=api_headers,
-                                 json=json,
-                                 stream=True)
+        try:
+            response = self.request.post(endpoint_url,
+                                     headers=api_headers,
+                                     json=json,
+                                     stream=True)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         if response.status_code == 403:  # invalid account token
             print(f"Invalid Access Token: {self.token}")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
@@ -69,7 +81,6 @@ def start_cluster(token, instance_id, cluster_id):
     Starts a Databricks Cluster and saves the status in the artifacts folder.
     Ideally this function should be run first whenever someone tries to
     interact with Databricks using our CLI applications.
-
     see: https://docs.databricks.com/dev-tools/api/latest/clusters.html#start
     """
     databricks_client = DatabricksClient(token, instance_id)
