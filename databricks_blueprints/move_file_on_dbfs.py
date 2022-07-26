@@ -1,5 +1,6 @@
 import argparse
 import requests
+import os
 import sys
 import shipyard_utils as shipyard
 try:
@@ -22,6 +23,17 @@ def get_args():
     return args
 
 
+def dbfs_mkdirs(client, directory_path):
+    """Create the given directory and necessary parent directories if they do not exist """
+    mkdir_endpoint = "/dbfs/mkdirs"
+    payload = {'path': os.path.dirname(directory_path)}
+    mkdir_response = client.post(mkdir_endpoint, data=payload)
+    if mkdir_response.status_code == requests.codes.ok:
+        print(f"Successfully made directories for path: {directory_path}")
+    else:
+        print(f"Failed to make directory path: {mkdir_response.text}")
+
+
 def dbfs_move_file(client, source_file_path, destination_file_path):
     move_endpoint = "/dbfs/move"
     payload = {
@@ -31,12 +43,18 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
     move_response = client.post(move_endpoint, data=payload)
     if move_response.status_code == requests.codes.ok:
         print(f"File: {source_file_path} moved successfully to {destination_file_path}")
-    elif move_response.status_code == 401:
+    elif move_response.status_code == 404:
         print(f"File: {source_file_path} does not exist")
         sys.exit(errors.EXIT_CODE_DBFS_INVALID_SOURCE)
+    elif move_response.status_code == 500:
+        error_message = move_response.json()['message']
+        print(
+            f"Error trying to move to {destination_file_path} : {error_message}"
+        )
+        sys.exit(errors.EXIT_CODE_DBFS_MOVE_ERROR)
     else:
         print(f"DBFS {source_file_path} to {destination_file_path} failed.",
-              "response: {move_response.text}")
+              "response: {move_response.text} status: {move_response.status_code}")
         sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
 
@@ -51,6 +69,12 @@ def main():
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
     # create file paths
+    if not source_folder_name:
+        source_folder_name = '/FileStore/'
+        
+    if not dest_folder_name:
+        dest_folder_name = '/FileStore/'
+        
     source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name,
         source_file_name
@@ -59,6 +83,7 @@ def main():
         dest_folder_name,
         dest_file_name
     )
+    dbfs_mkdirs(client, destination_file_path)
     dbfs_move_file(client, source_file_path, destination_file_path)
 
 
