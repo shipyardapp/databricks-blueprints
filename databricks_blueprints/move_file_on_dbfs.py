@@ -1,6 +1,7 @@
 import argparse
 import requests
 import os
+import re
 import sys
 import shipyard_utils as shipyard
 try:
@@ -19,6 +20,8 @@ def get_args():
     parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
     parser.add_argument('--dest-file-name', dest='dest_file_name', required=False)
     parser.add_argument('--dest-folder-name', dest='dest_folder_name', required=False)
+    parser.add_argument('--source-file-name-match-type', dest='source_file_name_match_type',
+                        choices={'exact_match', 'regex_match'}, required=True)
     args = parser.parse_args()
     return args
 
@@ -66,6 +69,7 @@ def main():
     source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
     dest_folder_name = args.dest_folder_name
+    source_file_name_match_type = args.source_file_name_match_type
     # create client
     client = helpers.DatabricksClient(access_token, instance_id)
     # create file paths
@@ -77,17 +81,32 @@ def main():
         
     if not dest_file_name:
         dest_file_name = source_file_name
-
-    source_file_path = shipyard.files.combine_folder_and_file_name(
-        source_folder_name,
-        source_file_name
-    )
-    destination_file_path = shipyard.files.combine_folder_and_file_name(
-        dest_folder_name,
-        dest_file_name
-    )
-    dbfs_mkdirs(client, destination_file_path)
-    dbfs_move_file(client, source_file_path, destination_file_path)
+        
+    if source_file_name_match_type == 'regex_match':
+        files = helpers.list_dbfs_files(client, source_folder_name)
+        matching_file_names = shipyard.files.find_all_file_matches(files,
+                                            re.compile(source_file_name))
+        print(f'{len(matching_file_names)} files found. Preparing to move...')
+        # create folder directory path
+        dbfs_mkdirs(client, dest_folder_name)
+        # create move file path
+        for index, file_name in enumerate(matching_file_names):
+            source_file_path = shipyard.files.combine_folder_and_file_name(
+                            source_folder_name, file_name)
+            dest_file_path = shipyard.files.combine_folder_and_file_name(
+                            dest_folder_name, file_name)
+            dbfs_move_file(client, source_file_path, dest_file_path)
+    else:
+        source_file_path = shipyard.files.combine_folder_and_file_name(
+            source_folder_name,
+            source_file_name
+        )
+        destination_file_path = shipyard.files.combine_folder_and_file_name(
+            dest_folder_name,
+            dest_file_name
+        )
+        dbfs_mkdirs(client, destination_file_path)
+        dbfs_move_file(client, source_file_path, destination_file_path)
 
 
 if __name__ == "__main__":
