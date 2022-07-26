@@ -17,7 +17,7 @@ def get_args():
     parser.add_argument('--instance-id', dest='instance_id', required=True)
     parser.add_argument('--source-file-name', dest='source_file_name', required=True)
     parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
-    parser.add_argument('--dest-file-name', dest='dest_file_name', required=True)
+    parser.add_argument('--dest-file-name', dest='dest_file_name', required=False)
     parser.add_argument('--dest-folder-name', dest='dest_folder_name', required=False)
     args = parser.parse_args()
     return args
@@ -75,6 +75,9 @@ def main():
     if not dest_folder_name:
         dest_folder_name = '/FileStore/'
         
+    if not dest_file_name:
+        dest_file_name = source_file_name
+
     source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name,
         source_file_name
