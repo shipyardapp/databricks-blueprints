@@ -30,7 +30,7 @@ def check_file_status(client, file_path_and_name):
     }
     response = client.get(check_endpoint, params=params)
     status_code = response.status_code
-    if status_code in requests.codes.ok: # File found
+    if status_code == requests.codes.ok: # File found
         print(f"file {file_path_and_name} still in DBFS")
     elif status_code == 404: # File not found
         print(f"file {file_path_and_name} is no longer in DBFS")
