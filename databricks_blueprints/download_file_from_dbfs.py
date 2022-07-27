@@ -122,7 +122,7 @@ def main():
     # otherwise download the file normally
     else:
         source_file_path = shipyard.files.combine_folder_and_file_name(
-                        source_folder_name, file_name)
+                        source_folder_name, source_file_name)
         destination_file_path = shipyard.files.combine_folder_and_file_name(
                             dest_folder_name, dest_file_name)
         download_file_from_dbfs(client, source_file_path, destination_file_path)
