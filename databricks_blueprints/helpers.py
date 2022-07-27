@@ -127,8 +127,9 @@ def list_dbfs_files(client, folder_path):
     params = {"path": folder_path}
     response = client.get('/dbfs/list', params=params)
     files_data = response.json()['files']
-    files_list = [
-        Path(file['path']).name for file in files_data
-        if file['is_dir'] == False
-    ]
+    files_list = files_data
+    for file_info in files_data:
+        path = file_info['path']
+        if file_info['is_dir'] == True:
+            files_list += list_dbfs_files(client, path)
     return files_list
