@@ -106,7 +106,11 @@ def main():
         files = helpers.list_dbfs_files(client, source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(files,
                                             re.compile(source_file_name))
-        print(f'{len(matching_file_names)} files found. Preparing to download...')
+        num_matches = len(matching_file_names)
+        if num_matches == 0:
+            print(f"No regex matches found for {source_file_name}")
+            sys.exit()
+        print(f'{num_matches} files found. Preparing to download...')
         for index, file_name in enumerate(matching_file_names):
             source_file_path = shipyard.files.combine_folder_and_file_name(
                         source_folder_name, file_name)
