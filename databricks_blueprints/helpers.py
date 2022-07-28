@@ -126,7 +126,11 @@ def list_dbfs_files(client, folder_path):
     """ retrieves a list of all the DBFS files with the names intact"""
     params = {"path": folder_path}
     response = client.get('/dbfs/list', params=params)
-    files_data = response.json()['files']
+    try:
+        files_data = response.json()['files']
+    except KeyError:
+        print(f"Directory path: {folder_path} not found/does not exist on dbfs!")
+        sys.exit(errors.EXIT_CODE_BAD_REQUEST)
     files_list = [
         Path(file['path']).name for file in files_data
         if file['is_dir'] == False

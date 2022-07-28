@@ -43,7 +43,16 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
         "source_path": source_file_path, 
         "destination_path": destination_file_path
         }
-    move_response = client.post(move_endpoint, data=payload)
+    try:
+        move_response = client.post(move_endpoint, data=payload)
+    except Exception as e:
+        # Check if incorrect url provided first
+        if 'nodename nor servname provided' in str(e):
+            print("Invalid or wrong databricks instance url provided. Please check and try again")
+            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
+        else:
+            print(f"Error occurred when trying move request: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
     if move_response.status_code == requests.codes.ok:
         print(f"File: {source_file_path} moved successfully to {destination_file_path}")
     elif move_response.status_code == 404:
