@@ -98,7 +98,7 @@ def main():
         num_matches = len(matching_file_names)
         if num_matches == 0:
             print("No files matching regex found")
-            sys.exit()
+            sys.exit(errors.EXIT_CODE_DBFS_MOVE_ERROR)
         print(f'{num_matches} files found. Preparing to move...')
         # create folder directory path
         dbfs_mkdirs(client, dest_folder_name)
@@ -107,7 +107,7 @@ def main():
             source_file_path = shipyard.files.combine_folder_and_file_name(
                             source_folder_name, file_name)
             dest_file_path = shipyard.files.combine_folder_and_file_name(
-                            dest_folder_name, file_name)
+                            dest_folder_name, f"{dest_file_name}_{index}")
             dbfs_move_file(client, source_file_path, dest_file_path)
     else:
         source_file_path = shipyard.files.combine_folder_and_file_name(
