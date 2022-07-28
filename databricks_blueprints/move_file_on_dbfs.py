@@ -57,7 +57,7 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
         sys.exit(errors.EXIT_CODE_DBFS_MOVE_ERROR)
     else:
         print(f"DBFS {source_file_path} to {destination_file_path} failed.",
-              "response: {move_response.text} status: {move_response.status_code}")
+              f"response: {move_response.text} status: {move_response.status_code}")
         sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
 
 
@@ -86,7 +86,11 @@ def main():
         files = helpers.list_dbfs_files(client, source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(files,
                                             re.compile(source_file_name))
-        print(f'{len(matching_file_names)} files found. Preparing to move...')
+        num_matches = len(matching_file_names)
+        if num_matches == 0:
+            print("No files matching regex found")
+            sys.exit()
+        print(f'{num_matches} files found. Preparing to move...')
         # create folder directory path
         dbfs_mkdirs(client, dest_folder_name)
         # create move file path
