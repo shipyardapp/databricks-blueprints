@@ -94,6 +94,9 @@ def main():
     
     if not source_folder_name:
         source_folder_name = '/FileStore/'
+    else:
+        # get the cleaned file name
+        source_folder_name = '/' + shipyard.files.clean_folder_name(source_folder_name) + '/'
 
     if not dest_file_name:
         dest_file_name = source_file_name
