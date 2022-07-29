@@ -6,10 +6,10 @@ import requests
 import re
 import shipyard_utils as shipyard
 try:
-    import helpers
+    import databricks_client
     import errors
 except BaseException:
-    from . import helpers
+    from . import databricks_client
     from . import errors
 
 ONE_MB = 1024*1024
@@ -90,7 +90,7 @@ def main():
     dest_folder_name = args.dest_folder_name
     source_file_name_match_type = args.source_file_name_match_type
     # create client
-    client = helpers.DatabricksClient(access_token, instance_id)
+    client = databricks_client.DatabricksClient(access_token, instance_id)
     
     if not source_folder_name:
         source_folder_name = '/FileStore/'
@@ -106,7 +106,7 @@ def main():
         
     # get list of all potential file matches
     if source_file_name_match_type == 'regex_match':
-        files = helpers.list_dbfs_files(client, source_folder_name)
+        files = client.list_dbfs_files(client, source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(files,
                                             re.compile(source_file_name))
         num_matches = len(matching_file_names)
