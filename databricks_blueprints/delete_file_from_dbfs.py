@@ -45,7 +45,16 @@ def delete_file_from_dbfs(client, file_path_and_name):
         'path': file_path_and_name
     }
     print(f"Start delete for {file_path_and_name}")
-    delete_response = client.post(delete_endpoint, data=data)
+    try:
+        delete_response = client.post(delete_endpoint, data=data)
+    except Exception as e:
+        # Check if incorrect url provided first
+        if 'nodename nor servname provided' in str(e):
+            print("Invalid or wrong databricks instance url provided. Please check and try again")
+            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
+        else:
+            print(f"Error occurred when trying move request: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
     if delete_response.status_code == requests.codes.ok:
         print(f"DBFS File: {file_path_and_name} delete function started...")
         check_file_status(client, file_path_and_name)
