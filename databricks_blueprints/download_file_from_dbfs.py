@@ -106,7 +106,7 @@ def main():
         
     # get list of all potential file matches
     if source_file_name_match_type == 'regex_match':
-        files = client.list_dbfs_files(client, source_folder_name)
+        files = databricks_client.list_dbfs_files(client, source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(files,
                                             re.compile(source_file_name))
         num_matches = len(matching_file_names)
