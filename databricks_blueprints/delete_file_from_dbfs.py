@@ -82,6 +82,8 @@ def main():
     source_file_name_match_type = args.source_file_name_match_type
     if not source_folder_name:
         source_folder_name = '/FileStore/'
+    else: # clean folder name
+        source_folder_name = '/' + shipyard.files.clean_folder_name(source_folder_name) + '/'
 
     # create client
     client = databricks_client.DatabricksClient(access_token, instance_url)
