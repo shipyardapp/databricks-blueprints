@@ -132,4 +132,4 @@ def list_dbfs_files(client, folder_path):
         path = file_info['path']
         if file_info['is_dir'] == True:
             files_list += list_dbfs_files(client, path)
-    return files_list
+    return {file['path'] for file in files_list if file['is_dir'] == False}

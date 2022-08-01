@@ -4,17 +4,17 @@ import requests
 import re
 import shipyard_utils as shipyard
 try:
-    import helpers
+    import databricks_client
     import errors
 except BaseException:
-    from . import helpers
+    from . import databricks_client
     from . import errors
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--access-token', dest='access_token', required=True)
-    parser.add_argument('--instance-id', dest='instance_id', required=True)
+    parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument('--source-file-name', dest='source_file_name', required=True)
     parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
     parser.add_argument('--source-file-name-match-type', dest='source_file_name_match_type',
@@ -67,7 +67,7 @@ def delete_file_from_dbfs(client, file_path_and_name):
 def main():
     args = get_args()
     access_token = args.access_token
-    instance_id = args.instance_id
+    instance_url = args.instance_url
     source_file_name = args.source_file_name
     source_folder_name = args.source_folder_name
     source_file_name_match_type = args.source_file_name_match_type
@@ -75,10 +75,10 @@ def main():
         source_folder_name = '/FileStore/'
 
     # create client
-    client = helpers.DatabricksClient(access_token, instance_id)
+    client = databricks_client.DatabricksClient(access_token, instance_url)
     # get list of all potential file matches
     if source_file_name_match_type == 'regex_match':
-        files = helpers.list_dbfs_files(client, source_folder_name)
+        files = databricks_client.list_dbfs_files(client, source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(files,
                                             re.compile(source_file_name))
         num_matches = len(matching_file_names)
@@ -87,9 +87,7 @@ def main():
             sys.exit()
         print(f'{num_matches} files found. Preparing to delete...')
         # create delete file path
-        for index, file_name in enumerate(matching_file_names):
-            file_path_and_name = shipyard.files.combine_folder_and_file_name(source_folder_name,
-                                                                   file_name)
+        for file_path_and_name in matching_file_names:
             delete_file_from_dbfs(client, file_path_and_name)
     else:
         file_path_and_name = shipyard.files.combine_folder_and_file_name(source_folder_name,
