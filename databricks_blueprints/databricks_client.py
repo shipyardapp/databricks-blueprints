@@ -126,7 +126,16 @@ def list_dbfs_files(client, folder_path):
     """ retrieves a list of all the DBFS files with the names intact"""
     params = {"path": folder_path}
     response = client.get('/dbfs/list', params=params)
-    files_data = response.json()['files']
+    response_json = response.json()
+    if response_json:  # check if any files in path
+        files_data = response_json['files']
+    else:
+        files_data = []
+    # convert any files in files_data to dict if str
+    files_data = [
+      {'path': file, 'is_dir': False} for file in files_data
+      if type(file) == str
+    ]
     files_list = files_data
     for file_info in files_data:
         path = file_info['path']
