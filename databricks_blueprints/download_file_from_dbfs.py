@@ -111,7 +111,7 @@ def main():
             # create destination file name
             if not args.dest_file_name:
                 dest_file_name = shipyard.files.extract_file_name_from_source_full_path(file_name)
-            dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name)
+            dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name, file_number=index)
             destination_file_path = shipyard.files.combine_folder_and_file_name(
                             dest_folder_name, dest_file_name)
             print(f'Downloading file {index+1} of {len(matching_file_names)}')
