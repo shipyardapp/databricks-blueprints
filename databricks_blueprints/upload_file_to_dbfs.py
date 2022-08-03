@@ -6,17 +6,17 @@ import re
 import requests
 import shipyard_utils as shipyard
 try:
-    import helpers
+    import databricks_client
     import errors
 except BaseException:
-    from . import helpers
+    from . import databricks_client
     from . import errors
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--access-token', dest='access_token', required=True)
-    parser.add_argument('--instance-id', dest='instance_id', required=True)
+    parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument('--source-file-name',
                         dest='source_file_name',
                         required=True)
@@ -86,14 +86,14 @@ def upload_file_to_dbfs(client, local_file_path, dest_file_path):
 def main():
     args = get_args()
     access_token = args.access_token
-    instance_id = args.instance_id
+    instance_url = args.instance_url
     source_file_name = args.source_file_name
     source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
     dest_folder_name = args.dest_folder_name
     source_file_name_match_type = args.source_file_name_match_type
     # create client
-    client = helpers.DatabricksClient(access_token, instance_id)
+    client = databricks_client.DatabricksClient(access_token, instance_url)
     # create file paths
     if not source_folder_name:
         source_folder_name = os.getcwd()
