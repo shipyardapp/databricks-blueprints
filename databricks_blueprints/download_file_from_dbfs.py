@@ -18,7 +18,7 @@ ONE_MB = 1024*1024
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--access-token', dest='access_token', required=True)
-    parser.add_argument('--instance-id', dest='instance_id', required=True)
+    parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument('--source-file-name', dest='source_file_name', required=True)
     parser.add_argument('--source-folder-name', dest='source_folder_name', required=False)
     parser.add_argument('--dest-file-name', dest='dest_file_name', required=False)
@@ -83,14 +83,14 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
 def main():
     args = get_args()
     access_token = args.access_token
-    instance_id = args.instance_id
+    instance_url = args.instance_url
     source_file_name = args.source_file_name
     source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
     dest_folder_name = args.dest_folder_name
     source_file_name_match_type = args.source_file_name_match_type
     # create client
-    client = databricks_client.DatabricksClient(access_token, instance_id)
+    client = databricks_client.DatabricksClient(access_token, instance_url)
     
     if not source_folder_name:
         source_folder_name = '/FileStore/'
@@ -112,18 +112,20 @@ def main():
         num_matches = len(matching_file_names)
         if num_matches == 0:
             print(f"No regex matches found for {source_file_name}")
-            sys.exit()
+            sys.exit(errors.EXIT_CODE_DBFS_INVALID_FILEPATH)
         print(f'{num_matches} files found. Preparing to download...')
         for index, file_name in enumerate(matching_file_names):
-            source_file_path = shipyard.files.combine_folder_and_file_name(
-                        source_folder_name, file_name)
+            source_file_path = file_name
+            # create destination file name
+            dest_file_name = shipyard.files.extract_file_name_from_source_full_path(file_name)
+            dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name, index)
             destination_file_path = shipyard.files.combine_folder_and_file_name(
-                            dest_folder_name, file_name)
+                            dest_folder_name, dest_file_name)
             print(f'Downloading file {index+1} of {len(matching_file_names)}')
             try:
                 download_file_from_dbfs(client, source_file_path, destination_file_path)
-            except Exception:
-                print(f'Failed to download {file_name}... Skipping')
+            except Exception as e:
+                print(f'Failed to download {file_name}...{e}')
     # otherwise download the file normally
     else:
         source_file_path = shipyard.files.combine_folder_and_file_name(
