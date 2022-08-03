@@ -98,11 +98,11 @@ def main():
         # get the cleaned file name
         source_folder_name = '/' + shipyard.files.clean_folder_name(source_folder_name) + '/'
 
-    if not dest_file_name:
-        dest_file_name = source_file_name
-
     if not dest_folder_name:
         dest_folder_name = os.getcwd()
+    else:
+        # create folder path if does not exist
+        shipyard.files.create_folder_if_dne(dest_folder_name)
         
     # get list of all potential file matches
     if source_file_name_match_type == 'regex_match':
@@ -117,8 +117,9 @@ def main():
         for index, file_name in enumerate(matching_file_names):
             source_file_path = file_name
             # create destination file name
-            dest_file_name = shipyard.files.extract_file_name_from_source_full_path(file_name)
-            dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name, index)
+            if not dest_file_name:
+                dest_file_name = shipyard.files.extract_file_name_from_source_full_path(file_name)
+            dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name)
             destination_file_path = shipyard.files.combine_folder_and_file_name(
                             dest_folder_name, dest_file_name)
             print(f'Downloading file {index+1} of {len(matching_file_names)}')
@@ -128,6 +129,8 @@ def main():
                 print(f'Failed to download {file_name}...{e}')
     # otherwise download the file normally
     else:
+        if not dest_file_name:
+            dest_file_name = source_file_name
         source_file_path = shipyard.files.combine_folder_and_file_name(
                         source_folder_name, source_file_name)
         destination_file_path = shipyard.files.combine_folder_and_file_name(
