@@ -31,23 +31,17 @@ def get_args():
 
 def download_file_from_dbfs(client, source_file_path, dest_file_path):
     read_handle_endpoint = "/dbfs/read"
-    # check if filetype works with binary or not
-    if ('.csv' in source_file_path) or ('.txt' in source_file_path):
-        is_binary = False
-        write_mode = "w+"
-    else:
-        is_binary = True
-        write_mode = 'wb+'
-    with open(dest_file_path, write_mode) as file:
+    with open(dest_file_path, 'wb+') as file:
         offset = 0
         while True:
             payload = {
                 "path": source_file_path,
-                "offset": offset, 
-                "length": ONE_MB # 1MB of data 
+                "offset": offset,
+                "length": ONE_MB  # 1MB of data 
             }
             try:
-                read_response = client.get(read_handle_endpoint, params=payload)
+                read_response = client.get(read_handle_endpoint,
+                                           params=payload)
             except Exception:
                 print(f'Connection Error for {read_handle_endpoint}')
                 print(f"Data downloaded: {offset/1024}MB")
@@ -56,29 +50,27 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
             if read_response.status_code == requests.codes.ok:
                 response_data = read_response.json()
                 data = base64.b64decode(response_data['data'])
-                if is_binary:
-                    file.write(data)
-                else:
-                    file.write(data.decode('utf-8'))
+                file.write(data)
                 # check if there is still more data left to read
                 if response_data['bytes_read'] == ONE_MB:
                     offset += ONE_MB
-                else: # that was the last of the data in the file
+                else:  # that was the last of the data in the file
                     break
             elif read_response.status_code == 404:
                 print(f"Error: No file located at {source_file_path}")
                 sys.exit(errors.EXIT_CODE_DBFS_INVALID_FILEPATH)
-            elif read_response.status_code == 400: # Bad Request
+            elif read_response.status_code == 400:  # Bad Request
                 error = read_response.json()
                 code = error['error_code']
                 message = error['message']
                 print(f"Error: {code} {message}")
                 sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
             else:
-                print(f"Failed to read data: {read_response.status_code} {read_response.text}")
+                print(
+                    f"Failed to read data: {read_response.status_code} {read_response.text}"
+                )
                 sys.exit(errors.EXIT_CODE_DBFS_READ_ERROR)
-    print(f"finished downloading file:{source_file_path} as {dest_file_path}")
-    
+    print(f"finished downloading file:{source_file_path} as {dest_file_path}") 
 
 def main():
     args = get_args()
@@ -117,7 +109,7 @@ def main():
         for index, file_name in enumerate(matching_file_names):
             source_file_path = file_name
             # create destination file name
-            if not dest_file_name:
+            if not args.dest_file_name:
                 dest_file_name = shipyard.files.extract_file_name_from_source_full_path(file_name)
             dest_file_name = shipyard.files.enumerate_destination_file_name(dest_file_name)
             destination_file_path = shipyard.files.combine_folder_and_file_name(
@@ -129,7 +121,7 @@ def main():
                 print(f'Failed to download {file_name}...{e}')
     # otherwise download the file normally
     else:
-        if not dest_file_name:
+        if not args.dest_file_name:
             dest_file_name = source_file_name
         source_file_path = shipyard.files.combine_folder_and_file_name(
                         source_folder_name, source_file_name)
