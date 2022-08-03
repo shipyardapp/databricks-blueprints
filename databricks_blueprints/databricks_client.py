@@ -140,4 +140,4 @@ def list_dbfs_files(client, folder_path):
                 file_list += list_dbfs_files(client, file['path'])
             else:
                 file_list.append(file['path'])
-        return file_list
+    return file_list
