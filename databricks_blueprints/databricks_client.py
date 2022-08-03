@@ -134,9 +134,10 @@ def list_dbfs_files(client, folder_path):
     base_dir = files
     file_list = []
     # loop through the base path and get retrieve all the folders
-    for file in base_dir['files']:
-        if file['is_dir'] == True:
-            file_list += list_dbfs_files(client, file['path'])
-        else:
-            file_list.append(file['path'])
+    if base_dir:
+        for file in base_dir['files']:
+            if file['is_dir'] == True:
+                file_list += list_dbfs_files(client, file['path'])
+            else:
+                file_list.append(file['path'])
     return file_list
