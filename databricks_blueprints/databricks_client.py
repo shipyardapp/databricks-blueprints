@@ -21,7 +21,7 @@ class DatabricksClient(object):
     def __init__(self, token, instance_url):
         self.token = token
         self.base_url = f"https://{instance_url}/api/2.0"
-        self.request = requests.Session() # add HTTP persistence
+        self.request = requests.Session()  # add HTTP persistence
 
     def get_headers(self):
         return {
@@ -34,10 +34,10 @@ class DatabricksClient(object):
         endpoint_url = self.base_url + endpoint
         try:
             response = self.request.get(endpoint_url,
-                                    headers=api_headers,
-                                    params=params)
+                                        headers=api_headers,
+                                        params=params)
             if response.status_code == 403:  # invalid account token
-                print(f"Invalid Access Token: {self.token}")
+                print(f"Invalid Access Token")
                 sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
         except Exception as e:
             print(f"Error sending request to {endpoint}: {e}")
@@ -49,8 +49,8 @@ class DatabricksClient(object):
         endpoint_url = self.base_url + endpoint
         try:
             response = self.request.post(endpoint_url,
-                                     headers=api_headers,
-                                     json=data)
+                                         headers=api_headers,
+                                         json=data)
             if response.status_code == 403:  # invalid account token
                 print(f"Invalid Access Token: {self.token}")
                 sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
@@ -64,9 +64,9 @@ class DatabricksClient(object):
         endpoint_url = self.base_url + endpoint
         try:
             response = self.request.post(endpoint_url,
-                                     headers=api_headers,
-                                     json=json,
-                                     stream=True)
+                                         headers=api_headers,
+                                         json=json,
+                                         stream=True)
         except Exception as e:
             print(f"Error sending request to {endpoint}: {e}")
             sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
@@ -136,7 +136,7 @@ def list_dbfs_files(client, folder_path):
     # loop through the base path and get retrieve all the folders
     if base_dir:
         for file in base_dir['files']:
-            if file['is_dir'] == True:
+            if file['is_dir']:
                 file_list += list_dbfs_files(client, file['path'])
             else:
                 file_list.append(file['path'])
