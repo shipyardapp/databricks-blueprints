@@ -136,8 +136,6 @@ def main():
                 destination_file_name=dest_file_name,
                 source_full_path=source_file_path,
                 file_number=file_number)
-            # dest_file_path = shipyard.files.combine_folder_and_file_name(
-            #     dest_folder_name, f"{dest_file_name}_{index}")
             dbfs_move_file(client, source_file_path, dest_file_path)
     else:
         source_file_path = shipyard.files.combine_folder_and_file_name(
