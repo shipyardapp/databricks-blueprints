@@ -1,5 +1,6 @@
 import sys
 import requests
+from pathlib import Path
 import shipyard_utils as shipyard
 try:
     import errors
@@ -20,6 +21,7 @@ class DatabricksClient(object):
     def __init__(self, token, instance_url):
         self.token = token
         self.base_url = f"https://{instance_url}/api/2.0"
+        self.request = requests.Session()  # add HTTP persistence
 
     def get_headers(self):
         return {
@@ -30,38 +32,47 @@ class DatabricksClient(object):
     def get(self, endpoint, params={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.get(endpoint_url,
-                                headers=api_headers,
-                                params=params)
-        if response.status_code == 401:  # invalid account token
-            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
+        try:
+            response = self.request.get(endpoint_url,
+                                        headers=api_headers,
+                                        params=params)
+            if response.status_code == 403:  # invalid account token
+                print(f"Invalid Access Token")
+                sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         return response
 
     def post(self, endpoint, data={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.post(endpoint_url,
-                                 headers=api_headers,
-                                 json=data)
-        if response.status_code == 401:  # invalid account token
-            sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
+        try:
+            response = self.request.post(endpoint_url,
+                                         headers=api_headers,
+                                         json=data)
+            if response.status_code == 403:  # invalid account token
+                print(f"Invalid Access Token: {self.token}")
+                sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
         return response
 
     def stream(self, endpoint, json={}):
         api_headers = self.get_headers()
         endpoint_url = self.base_url + endpoint
-        response = requests.post(endpoint_url,
-                                 headers=api_headers,
-                                 json=json,
-                                 stream=True)
-        if response.status_code == 401:  # invalid account token
+        try:
+            response = self.request.post(endpoint_url,
+                                         headers=api_headers,
+                                         json=json,
+                                         stream=True)
+        except Exception as e:
+            print(f"Error sending request to {endpoint}: {e}")
+            sys.exit(errors.EXIT_CODE_UNKNOWN_ERROR)
+        if response.status_code == 403:  # invalid account token
+            print(f"Invalid Access Token: {self.token}")
             sys.exit(errors.EXIT_CODE_INVALID_CREDENTIALS)
-        elif response.status_code == 404:  # wrong instance_id
-            sys.exit(errors.EXIT_CODE_INVALID_INSTANCE)
         return response
 
 
@@ -70,7 +81,6 @@ def start_cluster(token, instance_id, cluster_id):
     Starts a Databricks Cluster and saves the status in the artifacts folder.
     Ideally this function should be run first whenever someone tries to
     interact with Databricks using our CLI applications.
-
     see: https://docs.databricks.com/dev-tools/api/latest/clusters.html#start
     """
     databricks_client = DatabricksClient(token, instance_id)
@@ -110,3 +120,24 @@ def start_cluster(token, instance_id, cluster_id):
               f"HTTP Status code: {start_response.status_code} ",
               f"and Response: {start_response.text}")
         sys.exit(errors.EXIT_CODE_CLUSTER_STATUS_ERRORED)
+
+
+def list_dbfs_files(client, folder_path):
+    """ retrieves a list of all the DBFS files with the names intact"""
+    params = {"path": folder_path}
+    response = client.get('/dbfs/list', params=params)
+    if response.status_code == 200:
+        files = response.json()
+    else:
+        print(f"error: {response.status_code}")
+    # get all the files within the stated base path
+    base_dir = files
+    file_list = []
+    # loop through the base path and get retrieve all the folders
+    if base_dir:
+        for file in base_dir['files']:
+            if file['is_dir']:
+                file_list += list_dbfs_files(client, file['path'])
+            else:
+                file_list.append(file['path'])
+    return file_list
