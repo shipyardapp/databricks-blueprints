@@ -10,11 +10,8 @@ try:
 except BaseException:
     from . import databricks_client
     from . import errors
+    
 
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--access-token', dest='access_token', required=True)
     parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument(
         '--source-file-name',
@@ -62,6 +59,7 @@ def dbfs_move_file(client, source_file_path, destination_file_path):
         "source_path": source_file_path,
         "destination_path": destination_file_path
     }
+
     try:
         move_response = client.post(move_endpoint, data=payload)
     except Exception as e:
