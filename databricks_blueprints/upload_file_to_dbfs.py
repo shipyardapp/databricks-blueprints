@@ -22,12 +22,14 @@ def get_args():
                         required=True)
     parser.add_argument('--source-folder-name',
                         dest='source_folder_name',
+                        default='',
                         required=False)
     parser.add_argument('--dest-file-name',
                         dest='dest_file_name',
                         required=False)
     parser.add_argument('--dest-folder-name',
                         dest='dest_folder_name',
+                        default='/FileStore/',
                         required=False)
     parser.add_argument('--source-file-name-match-type',
                         dest='source_file_name_match_type',
@@ -95,34 +97,25 @@ def main():
     # create client
     client = databricks_client.DatabricksClient(access_token, instance_url)
     # create file paths
-    if not source_folder_name:
-        source_folder_name = os.getcwd()
+
     source_file_path = shipyard.files.combine_folder_and_file_name(
         source_folder_name, source_file_name)
-
-    if not dest_folder_name:
-        dest_folder_name = '/FileStore/'
-    else:
-        dest_folder_name = '/' + shipyard.files.clean_folder_name(
-            dest_folder_name) + '/'
+    dest_folder_name = '/' + shipyard.files.clean_folder_name(
+        dest_folder_name) + '/'
 
     if source_file_name_match_type == 'regex_match':
-        files = os.listdir(source_folder_name)
+        all_local_files = shipyard.files.find_all_local_file_names(
+            source_folder_name)
         matching_file_names = shipyard.files.find_all_file_matches(
-            files, re.compile(source_file_name))
-        print(f'{len(matching_file_names)} files found. Preparing upload...')
+            all_local_files, re.compile(source_file_name))
         for index, file_name in enumerate(matching_file_names):
             source_file_path = shipyard.files.combine_folder_and_file_name(
                 source_folder_name, file_name)
-            if not dest_file_name:
-                # use the file's original file name if not specified
-                dest_file_name = file_name
-            else:
-                # otherwise, enumurate the user provided file name
-                dest_file_name = shipyard.files.enumerate_destination_file_name(
-                    dest_file_name, file_number=index)
-            dest_file_path = shipyard.files.combine_folder_and_file_name(
-                dest_folder_name, file_name)
+            dest_file_path = shipyard.files.determine_destination_full_path(
+                destination_folder_name=dest_folder_name,
+                destination_file_name=args.dest_file_name,
+                source_full_path=source_file_path,
+                file_number=None if len(matching_file_names) == 1 else index + 1)
             upload_file_to_dbfs(client, source_file_path, dest_file_path)
     else:
         if not dest_file_name:
