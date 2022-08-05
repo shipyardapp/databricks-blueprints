@@ -61,7 +61,9 @@ def delete_file_from_dbfs(client, file_path_and_name):
     print(f"Start delete for {file_path_and_name}")
     try:
         delete_response = client.post(delete_endpoint, data=data)
-        print(delete_response.text)
+        # This returns a 200 status with text of {} whether the file exists or not.
+        # The API doesn't give us a good way to verify file existence to error
+        # out if the provided file can't actually be deleted.
     except Exception as e:
         # Check if incorrect url provided first
         if 'nodename nor servname provided' in str(e):
