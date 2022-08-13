@@ -87,7 +87,6 @@ def upload_file_to_dbfs(client, local_file_path, dest_file_path):
 
 def main():
     args = get_args()
-    print(args)
     access_token = args.access_token
     instance_url = args.instance_url
     source_file_name = args.source_file_name
