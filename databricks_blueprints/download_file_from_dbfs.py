@@ -94,6 +94,7 @@ def download_file_from_dbfs(client, source_file_path, dest_file_path):
 
 def main():
     args = get_args()
+    print(args)
     access_token = args.access_token
     instance_url = args.instance_url
     source_file_name = args.source_file_name
