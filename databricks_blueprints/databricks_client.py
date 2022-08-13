@@ -130,6 +130,7 @@ def list_dbfs_files(client, folder_path):
         files = response.json()
     else:
         print(f"error: {response.status_code}")
+        print(response.text)
     # get all the files within the stated base path
     base_dir = files
     file_list = []
