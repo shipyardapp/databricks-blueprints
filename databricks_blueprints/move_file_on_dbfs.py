@@ -14,6 +14,7 @@ except BaseException:
 
 def get_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument('--access-token', dest='access_token', required=True)
     parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument(
         '--source-file-name',
