@@ -10,8 +10,9 @@ try:
 except BaseException:
     from . import databricks_client
     from . import errors
-    
 
+
+def get_args():
     parser.add_argument('--instance-url', dest='instance_url', required=True)
     parser.add_argument(
         '--source-file-name',
@@ -95,9 +96,15 @@ def main():
     access_token = args.access_token
     instance_url = args.instance_url
     source_file_name = args.source_file_name
-    source_folder_name = args.source_folder_name
+    if args.source_folder_name == '':
+        source_folder_name = '/FileStore/'
+    else:
+        source_folder_name = args.source_folder_name
     dest_file_name = args.dest_file_name
-    dest_folder_name = args.dest_folder_name
+    if args.dest_folder_name == '':
+        dest_folder_name = '/FileStore/'
+    else:
+        dest_folder_name = args.dest_folder_name
     source_file_name_match_type = args.source_file_name_match_type
     # create client
     client = databricks_client.DatabricksClient(access_token, instance_url)
